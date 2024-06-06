@@ -8,7 +8,17 @@ import kotlin.test.Test
 class LibraryTest {
 
 
+    @Test
+    fun `should search by book title`() {
 
+    }
+
+    @Test
+    fun `should search for book by author name`() {
+        val library = Library()
+        val books = library.searchByAuthorName("Baue")
+        books.isNotEmpty() shouldBe true
+    }
 
     @Test
     fun `some books should be of type Reference and the rest of type General`() {
