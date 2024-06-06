@@ -13,7 +13,7 @@ import kotlin.random.Random
  *
  *
  */
-class DataGenerator {
+object DataGenerator {
 
     fun generateAuthors(count: Int): List<Author> {
         return List(count) {
@@ -25,6 +25,10 @@ class DataGenerator {
         }
     }
 
+    fun generateUserName():String{
+        return "${firstNames.random()} ${lastNames.random()}"
+
+    }
 
 }
 
