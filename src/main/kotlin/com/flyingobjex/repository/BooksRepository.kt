@@ -5,12 +5,14 @@ import com.flyingobjex.model.Author
 import com.flyingobjex.model.Book
 import com.flyingobjex.model.BookStatus
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class BooksRepository {
 
     val allBooks: List<Book> = importDataSource()
     val authors = distinctAuthorsFromBooks()
-    val booksState: MutableStateFlow<BooksState> = MutableStateFlow(initState())
+    private val _booksState: MutableStateFlow<BooksState> = MutableStateFlow(initState())
+    val booksState = _booksState.asStateFlow()
 
     private fun distinctAuthorsFromBooks(): List<Author> =
         allBooks
@@ -23,31 +25,40 @@ class BooksRepository {
         return BooksState(books = allBooks)
     }
 
-    fun getAvailableBooks(): List<Book> = booksState.value.books.filter { it.bookStatus == BookStatus.AVAILABLE }
-    fun getCheckOutBooks(): List<Book> = booksState.value.books.filter { it.bookStatus == BookStatus.BORROWED }
+    fun getAvailableBooks(): List<Book> = _booksState.value.books.filter { it.bookStatus == BookStatus.AVAILABLE }
+    fun getCheckOutBooks(): List<Book> = _booksState.value.books.filter { it.bookStatus == BookStatus.BORROWED }
 
     fun searchByBookTitle(text: String): List<Book> {
         val searchText = text.lowercase()
-        return booksState.value.books.filter { it.title.lowercase().contains(searchText) }
+        return _booksState.value.books.filter { it.title.lowercase().contains(searchText) }
     }
 
     fun searchByAuthorName(text: String): List<Book> {
         val searchText = text.lowercase()
         val byLastName =
-            booksState.value.books.filter { it.authors.any { it.lastName.lowercase().contains(searchText) } }
+            _booksState.value.books.filter { it.authors.any { it.lastName.lowercase().contains(searchText) } }
         val byFirstName =
-            booksState.value.books.filter { it.authors.any { it.firstName.lowercase().contains(searchText) } }
+            _booksState.value.books.filter { it.authors.any { it.firstName.lowercase().contains(searchText) } }
         return byLastName + byFirstName
     }
 
     fun updateBook(book: Book): Book {
-        val removed = booksState.value.books.filterNot { it.bookId == book.bookId }
+        val removed = _booksState.value.books.filterNot { it.bookId == book.bookId }
         val updated = removed + listOf(book)
-        booksState.value = BooksState(books = updated)
+        _booksState.value = BooksState(books = updated)
         return book
     }
 
     fun getBook(bookId: String): Book {
-        return booksState.value.books.firstOrNull { it.bookId == bookId } ?: throw Error("Book not found")
+        return _booksState.value.books.firstOrNull { it.bookId == bookId } ?: throw Exception("Book not found")
+    }
+
+    /**
+     * currently just leaving this as a string search
+     * with a mind to standardize our import of how we handle
+     * isbn numbers later
+     */
+    fun searchByIsbnNumber(isbn: String): Book {
+        return _booksState.value.books.firstOrNull { it.isbn.contains(isbn) } ?: throw Exception("Book not found")
     }
 }

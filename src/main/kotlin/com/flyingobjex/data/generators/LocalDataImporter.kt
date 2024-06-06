@@ -18,7 +18,7 @@ object LocalDataImporter {
         val importedBooks = Json.decodeFromString<BooksImportDto>(data)
         val newBooks = importedBooks.books.map { book ->
             Book(
-                isbn = book.isbn ?: UUID.randomUUID().toString(), // if missing ISBN we just assign our own for now
+                isbn = book.isbn ?: "na", // if missing ISBN we just assign our own for now
                 bookId = UUID.randomUUID().toString(),
                 title = book.title,
                 authors = mapAuthors(book),

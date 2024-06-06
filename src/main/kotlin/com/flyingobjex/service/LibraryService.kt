@@ -1,4 +1,4 @@
-package com.flyingobjex
+package com.flyingobjex.service
 
 import com.flyingobjex.model.Book
 import com.flyingobjex.model.BookStatus
@@ -16,23 +16,30 @@ import java.util.UUID
 class LibraryService {
 
     private val booksRepository = BooksRepository()
-    val userRepository = UserRepository()
-    val transactionRepository = TransactionRepository()
+    private val userRepository = UserRepository()
+    private val transactionRepository = TransactionRepository()
 
+    /**
+     * Convenience accessors
+     */
     val allBooks = booksRepository.allBooks
     val allAuthors = booksRepository.authors
-
-    fun searchByBookTitle(text: String): List<Book> = booksRepository.searchByBookTitle(text)
-    fun searchByAuthorName(text: String): List<Book> = booksRepository.searchByAuthorName(text)
-    fun registerUser(user: LibraryUser): LibraryUser = userRepository.registerUser(user)
 
     fun availableBooks(): List<Book> = booksRepository.getAvailableBooks()
     fun checkedOutBooks(): List<Book> = booksRepository.getCheckOutBooks()
     fun getBook(bookId: String): Book = booksRepository.getBook(bookId)
 
+    fun registerUser(user: LibraryUser): LibraryUser = userRepository.registerUser(user)
+
+    /**
+     * Public
+     */
+    fun searchByBookTitle(text: String): List<Book> = booksRepository.searchByBookTitle(text)
+    fun searchByAuthorName(text: String): List<Book> = booksRepository.searchByAuthorName(text)
+    fun searchByIsbnNumber(isbnNumber: String): Book = booksRepository.searchByIsbnNumber(isbnNumber)
     fun requestCheckOut(bookId: String, user: LibraryUser): CheckOutRequest {
         val book = booksRepository.getBook(bookId)
-        val request = transactionRepository.saveRequest(crateBookRequest(book, user))
+        val request = transactionRepository.saveRequest(createBookRequest(book, user))
         return if (checkIfAuthorized(user, book)) {
             transactionRepository.updateRequest(request.copy(requestStatus = RequestStatus.DENIED))
         } else {
@@ -41,10 +48,13 @@ class LibraryService {
         }
     }
 
+    /**
+     * Private
+     */
     private fun checkIfAuthorized(user: LibraryUser, book: Book) =
         user.status != LibraryUserStatus.ACTIVE || book.bookStatus != BookStatus.AVAILABLE || book.bookType == BookType.REFERENCE
 
-    private fun crateBookRequest(
+    private fun createBookRequest(
         book: Book,
         user: LibraryUser
     ) = CheckOutRequest(
@@ -63,6 +73,13 @@ class LibraryService {
         val user = userRepository.generateAnonUser()
         userRepository.registerUser(user)
         return user
+    }
+
+    /**
+     * Convenience method for quick access of available book
+     */
+    fun getFirstAvailableBook(): Book {
+        return booksRepository.booksState.value.books.first { it.bookStatus == BookStatus.AVAILABLE && it.bookType == BookType.GENERAL }
     }
 
 }

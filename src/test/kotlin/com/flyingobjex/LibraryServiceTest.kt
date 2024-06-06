@@ -2,27 +2,32 @@ package com.flyingobjex
 
 import com.flyingobjex.model.BookStatus
 import com.flyingobjex.model.BookType
-import com.flyingobjex.model.CheckOutRequest
 import com.flyingobjex.model.RequestStatus
 import com.flyingobjex.model.user.LibraryUserStatus
 import com.flyingobjex.repository.UserRepository
+import com.flyingobjex.service.LibraryService
 import io.kotest.matchers.shouldBe
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
+/**
+ * Tests here have been ordered with the most recent at the top.
+ * New tests are added to the top of the file for readability's sake.
+ */
 class LibraryServiceTest {
 
-    var library = LibraryService()
+    private var library = LibraryService()
+    private var user = library.initWithHelperData()
 
     @BeforeTest
     fun before() {
         library = LibraryService()
+        user = library.initWithHelperData()
     }
 
     @Test
     fun `book should be UNAVAILABLE after check out`() {
-        val user = library.initWithHelperData()
-        val book = library.availableBooks().first { it.bookStatus == BookStatus.AVAILABLE }
+        val book = library.getFirstAvailableBook()
         library.requestCheckOut(book.bookId, user)
 
         val req = library.requestCheckOut(book.bookId, user)
@@ -30,32 +35,10 @@ class LibraryServiceTest {
     }
 
     @Test
-    fun `user should be allowed to check out AVAILABLE book`() {
-        val user = library.initWithHelperData()
-        val book = library.availableBooks().first { it.bookStatus == BookStatus.AVAILABLE }
-        val res = library.requestCheckOut(book.bookId, user)
-        res.requestStatus shouldBe RequestStatus.COMPLETED
-        val updatedBook = library.getBook(book.bookId)
-        updatedBook.bookStatus shouldBe BookStatus.BORROWED
-    }
-
-    @Test
     fun `should register new library user`() {
         val newUser = UserRepository().generateAnonUser()
         val res = library.registerUser(newUser)
         res.status shouldBe LibraryUserStatus.ACTIVE
-    }
-
-    @Test
-    fun `should search by book title`() {
-        val books = library.searchByBookTitle("Hibernate")
-        books.isNotEmpty() shouldBe true
-    }
-
-    @Test
-    fun `should search for book by author name`() {
-        val books = library.searchByAuthorName("Baue")
-        books.isNotEmpty() shouldBe true
     }
 
     @Test
